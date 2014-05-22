@@ -1,8 +1,8 @@
 \chapter{Testing and Evaluation}
-\label{chapter:test-eval}  
- 
+\label{chapter:test-eval}
+
 \section{Environment Setup}
-\label{chapter:sota} 
+\label{section:setup}
 
 The development and testing of Open vSwitch can be done using many virtualization solutions. The
 results presented here are based on using Mininet\cite{mn}. It is also possible to use some KVM\cite{kvm}
@@ -88,7 +88,7 @@ list of modified ports has only one element which is accesed in constant time.
   \centering
   \begin{tabular}{rrrrr}
     \toprule
-      Port Count & Individual Message Time(ms) & Bundled Message Time(ms) & Commit time(ms) \\ 
+      Port Count & Individual Message Time(ms) & Bundled Message Time(ms) & Commit time(ms) \\
     \midrule
         2 & 7.30 & 9.16 & 0.026 \\
        10 & 5.93 & 8.32 & 0.024 \\
@@ -111,7 +111,7 @@ the difference in processing time would be on the same level as the network late
   \centering
   \begin{tabular}{rrrrr}
     \toprule
-      Port Count & Individual Message Time(ms) & Bundled Message Time(ms) & Commit time(ms) \\ 
+      Port Count & Individual Message Time(ms) & Bundled Message Time(ms) & Commit time(ms) \\
     \midrule
         2 & 6.28 & 8.35 & 0.028 \\
        10 & 5.69 & 7.81 & 0.023 \\
