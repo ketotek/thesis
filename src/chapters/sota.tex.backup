@@ -1,0 +1,39 @@
+\chapter{State of the Art}
+\label{chapter:sota} 
+
+The SDN Product Directory\cite{onf:products} page from Open Networking Foundation\cite{onf} lists
+several products for hardware switching and virtual switching.
+
+state of the art
+
+Open vSwitch is able to connect to OpenFlow controllers, but it does not support the newest additions
+to the protocol. The documentation mentions that 
+``support for OpenFlow 1.1 and beyond is a work in progress''\footnote{\url{https://github.com/openvswitch/ovs/blob/master/OPENFLOW-1.1\%2B}}.
+ 
+\section{Related Work}
+
+% TODO: Floodlight, OpenDaylight
+
+On the controller side, there are also several implementations of frameworks used for developing
+various network management and control applications. POX can be used to write various networking software,
+including OpenFlow switches and controllers. However, it can only communicate with OpenFlow 1.0 switches.
+
+Another SDN framework is Ryu. It already supports various management protocols, including OpenFlow up to 1.4.
+This can be a useful tool to validate our work on Open vSwitch.
+
+\section{Project Motivation}
+
+\section{Use cases}
+
+Batching OpenFlow messages using bundles for having synchronized changes across multiple switches,
+for example, during an initialization phase. The pre-validation of messages and atomic commit ensure
+that the state remains consistent between the controller and several switches.
+
+Another use case for batching messages is that of network security application controllers. These can range
+from simple stateless firewalls to intrusion detection systems\cite{sdn}. They work by installing flows to
+allow or drop future packets. The decision to do that can be static, based on access control list, or dynamic,
+by inspecting the traffic patterns to determine the application types permissions.
+
+patterns
+By batching OpenFlow messages we can ensure
+that security rules are enforced correctly and completely. 

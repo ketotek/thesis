@@ -1,0 +1,124 @@
+\chapter{Testing and Evaluation}
+\label{chapter:test-eval}  
+ 
+\section{Environment Setup}
+\label{chapter:sota} 
+
+The development and testing of Open vSwitch can be done using many virtualization solutions. The
+results presented here are based on using Mininet\cite{mn}. It is also possible to use some KVM\cite{kvm}
+virtual machines. No matter of the chosen solution, the switch can connect to an
+external controller or function independently as a learning switch. As a controller, we opted
+to use a custom controller, written in Python, using the Ryu\cite{ryu} SDN framework.
+
+Mininet contains a series of scripts capable of creating a virtualized network. It is simple to
+use and provides a fast way to test various network protocols and solutions by creating
+an entire network topology using virtualization containers. In this case, Open vSwitch will
+be able to connect together the containers and can also be used with a controller.
+Interaction with the system is done with an \texttt{API} or through a single command line console.
+Commands are prefixed with the name of the host where the process should be run as shown in
+Listing~\ref{lst:mn}.
+\lstset{caption=Mininet Command Line,label=lst:mn}
+\begin{lstlisting}
+ mininet> h1 ping h2
+ mininet> h1 ifconfig
+\end{lstlisting}
+Any Linux command can be used, provided that it is installed on the host.
+
+Because we are working with new features of the OpenFlow protocol which are not implemented, some of
+the initial development was done by simulating messages from a controller. It is a slow and dificult method
+because it involves writing by hand the contents of the packets that we need our switch to process.
+We then developed a tool called ovs-pktgen\footnote{\url{https://github.com/IxLabs/ovs-pktgen}}
+to aid in the generation of OpenFlow messages by filling-in the fields of the actual on-the-wire
+data structures. After implementing other OpenFlow 1.4 features required for Open vSwitch to connect
+to an OpenFlow 1.4 controller, we were able to use Mininet with our own custom controller.
+
+Basically, our environment is setup by issuing the commands shown in Listing~\ref{lst:setup}.
+\lstset{caption=Setting up the Development Environment,label=lst:setup}
+\begin{lstlisting}
+ # ovsd-server [...] &
+ # ovs-vswitchd [...] &
+ # ryu-manager ryu-switch-port-mod.py &
+ # mn --controller=remote,ip=127.0.0.1
+\end{lstlisting}
+The first two lines are required to start up Open vSwitch and they need various other parameters.
+Then, the controller built with the Ryu framework is started and, finally, Mininet will tie
+everything together by configuring Open vSwitch to use the controller that was previously started.
+
+Another testing environment used is a set of 2 KVM virtual machines. These are configured to
+boot a Linux kernel and mount the host's file system, similar to the testing environment that
+I used in my previous research. This solution is better when one is also testing kernel related
+aspects in one of the VMs.
+
+\section{Results}
+
+The handling of the \texttt{ROLE_STATUS} OpenFlow messages was successfully integrated into Open vSwitch.
+In order to test the functionality and prevent future regressions, some unit tests
+where also implemented. The Open vSwitch project already has a set of tests for probably
+any functionality. These are written using GNU Autotest from the Autoconf\cite{autoconf}
+package by sending custom messages to the switch, simulating a controller.
+
+The implemented interface for bundles from the specification works as expected. The corner cases also
+have unit tests. This forms a base for implementing batching messages of any types.
+
+We have complete support for batching together multiple port-mod messages in bundles.
+
+OpenFlow flow-mod messages are also permited in bundles, but the implementation is not complete.
+We only support adding and removing flow messages.
+
+
+\section{Evaluation}
+
+In order to determine the performance of the OpenFlow bundles implementation, a comparative test
+was created. The learning switch controller was modified to create bundles, add messages to them
+and then commit the bundle. We recorded the running time of these operations on the controller side.
+The results were then compared with the running time for the same messages sent to the controller,
+but wihtout using bundles. All tests were run 10 times and the results were averaged.
+
+The tests were run with 100 port-mod messages, using an increasing number of ports connected to a single
+switch. The results in Table~\ref{tbl:bundleperf} show that the duration of the commit operation is constant,
+regardless of the number of ports. The total duration for processing bundled messages is, on average,
+$35\%$ slower than sending each message individually. This also includes the duration for allocating
+a bundle and closing it.
+
+It can also be observed that the total number of ports in the switch does not influence the performance.
+In this case, each port-mod message in a bundle is reffering to a single port of the switch. Therefore, the
+list of modified ports has only one element which is accesed in constant time.
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{rrrrr}
+    \toprule
+      Port Count & Individual Message Time(ms) & Bundled Message Time(ms) & Commit time(ms) \\ 
+    \midrule
+        2 & 7.30 & 9.16 & 0.026 \\
+       10 & 5.93 & 8.32 & 0.024 \\
+       100 & 6.36 & 8.93 & 0.027 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Bundled Messages Performance for 100 Messages}
+    \label{tbl:bundleperf}
+\end{table}
+
+We also ran the same tests by equally distributing the ports to the 100 port-mod messages. The results
+are shown in Table~\ref{tbl:bundleperf2}. In this case, the relative performance drop is, on average, of only $33\%$.
+The two sets of results are almost identical. One explanation is that the number of messages and the number of
+ports is relatively small. We believe that even with larger number of ports the performance doesn't degrade
+to the point of becoming a problem. Moreover, these results were obtained by having the switch and the controller
+on the same physical machine. If the controller was to run in another network, or even in the local network,
+the difference in processing time would be on the same level as the network latency.
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{rrrrr}
+    \toprule
+      Port Count & Individual Message Time(ms) & Bundled Message Time(ms) & Commit time(ms) \\ 
+    \midrule
+        2 & 6.28 & 8.35 & 0.028 \\
+       10 & 5.69 & 7.81 & 0.023 \\
+       100 & 5.97 & 7.71 & 0.024 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Bundled Messages Performance for 100 Messages and Different Ports}
+    \label{tbl:bundleperf2}
+\end{table}
+

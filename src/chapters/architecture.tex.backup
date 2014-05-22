@@ -1,0 +1,92 @@
+\chapter{Desing of the OpenFlow Bundles}
+\label{chapter:architecture}  
+% vim: set tw=78 sts=2 sw=2 ts=8 aw et ai:
+
+One way of ensuring that multiple OpenFlow messages are correctly processed on several switches
+is to execute them as part of a transaction. The idea is to create batches of messages and apply them
+all in one step, in an atomic way. If any of the messages in a batch is found to be invalid, the entire
+transaction is aborted.
+
+This solution can become useful, but only if application controllers use it. To increase that chance, we
+implemented it using a set of new OpenFlow 1.4 messages, Bundle messages.
+
+The properties that our trasaction system must have are atomic commits, consistency of changes and isolation.
+The durability characteristic, commonly part of database transactions, is not of interest in this case, because
+it is delegated to an actual database server, part of Open vSwitch.
+
+Because of the high variety of OpenFlow messages that could be bundled together, we focus our design
+and implementation only on some types of messages. These are messages that modify the state of the switch.
+The Port modification messages are used to change various flags on the ports of a switch: link state,
+dropping of incoming packets, link speed, auto-negotiation and many others. Flow entry modification messages
+apply changes to the rules that a switch uses to make forwarding decisions. Other messages will have to
+trigger an error if they are added to a bundle.
+
+The high level algorithm that will govern the way bundles operate is shown in Listing~\ref{code:alg}. The top
+level actions of opening a bundle, adding messages and commiting will corespond to OpenFlow 1.4 bundle messages.
+These will be sent by a controller application as part of the bundle workflow.
+
+To ensure that at the time of the commit, the chances of failing are as small as possible, each message
+is validated before being added to a bundle. These validity checks are specific to each message type and refer
+both to the message format and content and to the switch state. The actual verification is done acording to
+the OpenFlow specification as if each message was received separately and not in a bundle.
+
+\pagebreak
+\begin{lstlisting}[caption={Basic Commit Algorithm}, label=code:alg]
+Open a new bundle
+Add a message
+  Check message validity
+  if invalid:
+    drop bundle
+  Push message to bundle
+Commit bundle
+  Create staging area
+  Apply changes to staging area
+  Queue notifications
+  if no error:
+     Change switch state to match staging area
+     Send notifications
+\end{lstlisting}
+
+The isolation aspect of the transaction comes from the use of a staging area, separate from the current switch state.
+When a message is decoded and added to a bundle, a copy of the data structure modified by the message is made.
+All the changes will me made to this copy, without it affecting other parts of the switch. If multiple changes refer to
+the same data structure, in this case, a port or a flow, the changes can be merged. Then, at the time of commit, only
+the modifications between the state of the switch before the bundle and the final staging area state will be applied
+in a single step.
+
+One aspect that is very important both to the design and implementation of this bundles feature is the way we
+treat side effects during the commit phase. Most of the side effects produced by applying a port or flow modification
+message are aleviated by using the staging area. In case of errors during commit, we have $2$ options: we either do
+nothing, if we didn't have side effects and just clear the staging area; or we rollback all the changes we made until
+the error occured. However, the second option is not enough. We could still have side effects, like sending status updates
+which we can't rollback. The only solution is to delay these notifications until we are sure all the operations have
+succeded.
+
+
+
+\subsection{Implementation}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.5]{src/img/bundle-content.eps}
+\end{center}
+\caption{Data Structures Used by a Bundle}
+\label{fig:bundles}
+\end{figure}
+
+For each OpenFlow connection we may have several bundles open at the same time. Moreover, bundles from different connections
+can have the same identifiers. We use a hash table per connection to hold all the active bundles. An example of the data structures
+that we will be using to implement bundles and the relations between them are shown in Figure~\ref{fig:bundles}.
+
+Each message added to a bundle is checked and the decoded version is cached in a list of messages.
+For port-mod messages, the staging area is made of copies of \texttt{struct ofport} representing the ports that
+will be modified by each message in a bundle. These structures are linked in a list and attached to the corresponding bundle.
+These data structures are modified iteratively by each message in the bundle. At the commit phase, we apply the changes in the
+staging area to the switch and send the needed notifications. From the point of view of the controller, there was only
+one operation that did all the changes together. This is possible for port-mod messages because the modified values are mostly
+flags so we can easily merge them together with binary operations. These flags are then pushed down to the underlying
+network device which controls the configured port.
+
+Handling flow-mod messages in a bundle is more difficult because the changes are spread in multiple parts of the switch.
+We cannot create the same type of staging area that we used for port-mod messages. Moreover, flow-mod messages can have
+multiple actions: Adding, modifying or removing a flow.
