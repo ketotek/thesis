@@ -10,7 +10,7 @@ transaction is aborted.
 This solution can become useful, but only if application controllers use it. To increase that chance, we
 implemented it using a set of new OpenFlow 1.4 messages, Bundle messages.
 
-The properties that our trasaction system must have are atomic commits, consistency of changes and isolation.
+The properties that our transaction system must have are atomic commits, consistency of changes and isolation.
 The durability characteristic, commonly part of database transactions, is not of interest in this case, because
 it is delegated to an actual database server, part of Open vSwitch.
 
@@ -22,12 +22,12 @@ apply changes to the rules that a switch uses to make forwarding decisions. Othe
 trigger an error if they are added to a bundle.
 
 The high level algorithm that will govern the way bundles operate is shown in Listing~\ref{code:alg}. The top
-level actions of opening a bundle, adding messages and commiting will corespond to OpenFlow 1.4 bundle messages.
+level actions of opening a bundle, adding messages and committing will correspond to OpenFlow 1.4 bundle messages.
 These will be sent by a controller application as part of the bundle workflow.
 
 To ensure that at the time of the commit, the chances of failing are as small as possible, each message
 is validated before being added to a bundle. These validity checks are specific to each message type and refer
-both to the message format and content and to the switch state. The actual verification is done acording to
+both to the message format and content and to the switch state. The actual verification is done according to
 the OpenFlow specification as if each message was received separately and not in a bundle.
 
 \pagebreak
@@ -56,11 +56,11 @@ in a single step.
 
 One aspect that is very important both to the design and implementation of this bundles feature is the way we
 treat side effects during the commit phase. Most of the side effects produced by applying a port or flow modification
-message are aleviated by using the staging area. In case of errors during commit, we have $2$ options: we either do
+message are alleviated by using the staging area. In case of errors during commit, we have $2$ options: we either do
 nothing, if we didn't have side effects and just clear the staging area; or we rollback all the changes we made until
-the error occured. However, the second option is not enough. We could still have side effects, like sending status updates
+the error occurred. However, the second option is not enough. We could still have side effects, like sending status updates
 which we can't rollback. The only solution is to delay these notifications until we are sure all the operations have
-succeded.
+succeeded.
 
 
 

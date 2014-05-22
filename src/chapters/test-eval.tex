@@ -25,7 +25,7 @@ Listing~\ref{lst:mn}.
 Any Linux command can be used, provided that it is installed on the host.
 
 Because we are working with new features of the OpenFlow protocol which are not implemented, some of
-the initial development was done by simulating messages from a controller. It is a slow and dificult method
+the initial development was done by simulating messages from a controller. It is a slow and difficult method
 because it involves writing by hand the contents of the packets that we need our switch to process.
 We then developed a tool called ovs-pktgen\footnote{\url{https://github.com/IxLabs/ovs-pktgen}}
 to aid in the generation of OpenFlow messages by filling-in the fields of the actual on-the-wire
@@ -62,7 +62,7 @@ have unit tests. This forms a base for implementing batching messages of any typ
 
 We have complete support for batching together multiple port-mod messages in bundles.
 
-OpenFlow flow-mod messages are also permited in bundles, but the implementation is not complete.
+OpenFlow flow-mod messages are also permitted in bundles, but the implementation is not complete.
 We only support adding and removing flow messages.
 
 
@@ -72,7 +72,7 @@ In order to determine the performance of the OpenFlow bundles implementation, a 
 was created. The learning switch controller was modified to create bundles, add messages to them
 and then commit the bundle. We recorded the running time of these operations on the controller side.
 The results were then compared with the running time for the same messages sent to the controller,
-but wihtout using bundles. All tests were run 10 times and the results were averaged.
+but without using bundles. All tests were run 10 times and the results were averaged.
 
 The tests were run with 100 port-mod messages, using an increasing number of ports connected to a single
 switch. The results in Table~\ref{tbl:bundleperf} show that the duration of the commit operation is constant,
@@ -81,8 +81,8 @@ $35\%$ slower than sending each message individually. This also includes the dur
 a bundle and closing it.
 
 It can also be observed that the total number of ports in the switch does not influence the performance.
-In this case, each port-mod message in a bundle is reffering to a single port of the switch. Therefore, the
-list of modified ports has only one element which is accesed in constant time.
+In this case, each port-mod message in a bundle is referring to a single port of the switch. Therefore, the
+list of modified ports has only one element which is accessed in constant time.
 
 \begin{table}[h]
   \centering
