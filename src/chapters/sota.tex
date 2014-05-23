@@ -15,15 +15,22 @@ that use OpenFlow 1.4.
  
 \section{Related Work}
 
-% TODO: Floodlight, OpenDaylight
+% TODO: Floodlight
 
 On the controller side, there are also several implementations of frameworks used for developing
 various network management and control applications. POX\cite{pox} can be used to write various networking software,
 including OpenFlow switches and controllers. However, it can only communicate with OpenFlow 1.0 switches.
 
+One of the relatively new SDN projects is OpenDaylight\footnote{\url{http://www.opendaylight.org/}}. It is lead by
+the Linux Foundation and aims to improve the development and adoption of SDN. Currently, they offer a modular controller,
+written in Java. Modules are provided both for northbound and southbound APIs. Northbound APIs are used by high level
+network application to implement bussiness logic. The southbound APIs allow the controller to act on the physical or
+virtual network devices, like switches. The support for OpenFlow is, however, limited to versions 1.0 and 1.3, so
+we had to find other options.
+
 Another SDN framework is Ryu\cite{ryu}. It already supports various management protocols, including OpenFlow up to 1.4.
 This can be a useful tool to validate our work on Open vSwitch. We will use it to create a simple learning switch
-controller that can also send OpenFlow 1.4 messages.
+controller that can also send OpenFlow 1.4 bundle messages.
 
 \section{Project Motivation}
 
