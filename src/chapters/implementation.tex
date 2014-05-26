@@ -1,7 +1,20 @@
 \chapter{Implementing the OpenFlow Bundles}
 \label{chapter:impl}  
  
-TODO: decide where to put this
+\section{Open vSwitch Preparation for OpenFlow 1.4}
+
+The bundles feature that is presented in this paper was introduced by OpenFlow 1.4. In order to add
+this new functionality to Open vSwitch, we first had to update the switch to the new protocol version.
+
+The first step was to add protocol definitions to allow the switch to accept the new version. We added
+a new header file and updated the build system scripts. These scripts are used to parse the headers
+to generate other data structures.
+
+Then we had to update the OpenFlow message handlers. Messages which have the same structure and semantics
+in OpenFlow 1.4 as in previous versions were made to use the existing implementation. For the rest of
+them, code assertions were used to make sure the switch would not process them.
+
+\section{OpenFlow Bundles}
 
 In order to make our contributions easier to use and to integrate them into Open vSwitch,
 we had first to create basic protocol communication handlers for OpenFlow bundles. This
@@ -11,7 +24,18 @@ includes encoding and decoding the following message types:
  \item OFPT_BUNDLE_ADD_MESSAGE
 \end{itemize}
 The first message type is used to open a new bundle, close it, respectively to commit or discard it. The
-second message is used after opening a bundle to add messages to it.
+actual on-the-wire contents of the packet has the structure presented in Figure~\ref{fig:bundle-open-bytes}.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.6]{src/img/bundle-open-message-bytes.eps}
+\end{center}
+\caption{The Structure of an OFPT_BUNDLE_CONTROL Message}
+\label{fig:bundle-open-bytes}
+\end{figure}
+
+The second message is used after opening a bundle to add messages to it. The same structure applies as for control
+messages, but the encpasulated message is added after the main message.
 
 \begin{figure}[h]
 \begin{center}
@@ -41,6 +65,8 @@ the bundle is automatically closed and removed.
 \label{fig:bundle-state}
 \end{figure}
 
+\section{Port Modification Messages}
+
 Each message added to a bundle is checked and the decoded version is cached in a list of messages.
 For port-mod messages, the staging area is made of copies of \texttt{struct ofport} representing the ports that
 will be modified by each message in a bundle. These structures are linked in a list and attached to the corresponding bundle.
@@ -52,6 +78,8 @@ staging area to the switch and send the needed notifications. From the point of 
 one operation that did all the changes together. This is possible for port-mod messages because the modified values are mostly
 flags so we can easily merge them together with binary operations. These flags are then pushed down to the underlying
 network device which controls the configured port.
+
+\section{Flow Modification Messages}
 
 Handling flow-mod messages in a bundle is more difficult because the changes are spread in multiple parts of the switch.
 We cannot create the same type of staging area that we used for port-mod messages. Moreover, flow-mod messages can have
