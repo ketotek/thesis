@@ -27,9 +27,23 @@ Any Linux command can be used, provided that it is installed on the host.
 Because we are working with new features of the OpenFlow protocol which are not implemented, some of
 the initial development was done by simulating messages from a controller. It is a slow and difficult method
 because it involves writing by hand the contents of the packets that we need our switch to process.
-We then developed a tool called ovs-pktgen\footnote{\url{https://github.com/IxLabs/ovs-pktgen}}
+The \texttt{ovs-appctl} command was ran like shown in Listing~\ref{lst:manual-packet} to send packets
+directly to Open vSwitch.
+
+\lstset{caption=Manually Sending OpenFlow Messages,label=lst:manual-packet}
+\begin{lstlisting}
+ $ ovs-appctl -t ovs-ofctl ofctl/send "05 21 00 10 00 00 00 0a 00 00 00 01 00 02 00 01"
+\end{lstlisting}
+
+We later developed a tool called ovs-pktgen\footnote{\url{https://github.com/IxLabs/ovs-pktgen}}
 to aid in the generation of OpenFlow messages by filling-in the fields of the actual on-the-wire
-data structures. After implementing other OpenFlow 1.4 features required for Open vSwitch to connect
+data structures. It extends the build scripts that already parse some header files to obtain the
+data structure fields for each type of OpenFlow message supported by Open vSwitch. The user only
+has to enter the version and message name. The fields are listed with the corresponding data type
+and the contents is read from the terminal. At the end, the tool forms the entire OpenFlow message
+and prints the hexadecimal representation of its contents.
+
+After implementing other OpenFlow 1.4 features required for Open vSwitch to connect
 to an OpenFlow 1.4 controller, we were able to use Mininet with our own custom controller.
 
 Basically, our environment is setup by issuing the commands shown in Listing~\ref{lst:setup}.
@@ -47,15 +61,22 @@ everything together by configuring Open vSwitch to use the controller that was p
 Another testing environment used is a set of 2 KVM virtual machines. These are configured to
 boot a Linux kernel and mount the host's file system, similar to the testing environment that
 I used in my previous research. This solution is better when one is also testing kernel related
-aspects in one of the VMs.
+aspects in one of the VMs. We used this setup for developing the security application presented
+in Chapter~\ref{chapter:app}.
 
 \section{Results}
+
+\subsection{Open vSwitch Hackathon}
+
+TODO: talk about the hackathon
 
 The handling of the \texttt{ROLE_STATUS} OpenFlow messages was successfully integrated into Open vSwitch.
 In order to test the functionality and prevent future regressions, some unit tests
 where also implemented. The Open vSwitch project already has a set of tests for probably
 any functionality. These are written using GNU Autotest from the Autoconf\cite{autoconf}
 package by sending custom messages to the switch, simulating a controller.
+
+\subsection{OpenFlow Bundles}
 
 The implemented interface for bundles from the specification works as expected. The corner cases also
 have unit tests. This forms a base for implementing batching messages of any types.
@@ -122,3 +143,29 @@ the difference in processing time would be on the same level as the network late
     \label{tbl:bundleperf2}
 \end{table}
 
+\begin{figure}[h]
+  \begin{center}
+    \begin{tikzpicture}
+	    \begin{axis}[
+		    xlabel=Port Count,
+		    ylabel=Duration (ms),
+		    legend style={at={(0.5,-0.20)},anchor=north},
+		    width=300
+		    ]
+	    \addplot[sharp plot,color=red,mark=x] coordinates {
+		    (2,7.3)
+		    (10,5.93)
+		    (100,6.36)
+	    };
+	    \addplot[sharp plot,color=blue,mark=*] coordinates {
+		    (2,9.16)
+		    (10,8.32)
+		    (100,8.93)
+	    };
+	    \legend{Individually Sent Messages, Bundled Messages}
+	    \end{axis}
+    \end{tikzpicture}
+    \caption{Bundled Messages Performance for 100 Messages}
+    \label{fig:bundleperf}
+  \end{center}
+\end{figure}

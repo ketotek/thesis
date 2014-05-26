@@ -151,6 +151,7 @@
   \end{small}
 }
 
+\usepackage{pgfplots}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % iiscthes.sty - IISC Thesis Style
