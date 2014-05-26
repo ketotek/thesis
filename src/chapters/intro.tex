@@ -10,14 +10,19 @@ for a large number of systems. The switch control plane will be managed by a \te
 and the data plane by a virtual or hardware switch. These two components will be presented in the following
 sections.
 
-\section{OpenFlow}
+\section{The Linux Software Bridge}
+We will start first introducing one solution that is still in use today for many applications that use virtualization.
+The Linux kernel has an implementation of a software switch. Using the \texttt{8021q} kernel module and the
+\texttt{bridge-utils} package we can create and configure virtual switches. Being a software solution, it cannot
+be faster than hardware switches. However, it brings a lot of flexibility. Virtualization products
+use the Linux software bridge to connect multiple virtual machines together or to an external physical network.
 
-OpenFlow can be considered a model\cite{sdn} having various characteristics:
-\begin{itemize}
- \item Communication protocols
- \item APIs for programmatic configuration
- \item Separation between the control plane and the forwarding plane.
-\end{itemize}
+The switch can also be configured manually. Forwarding rules are stored in the kernel using a Forwarding DataBase (FDB).
+This can work in practice, but with a large number of ports and rules, it becomes difficult. Keeping the rules updated
+and migrating them as the virtual machines require is also a problem. Here is where SDN can help, as we will discuss
+in the following sections.
+
+\section{OpenFlow}
 
 OpenFlow is the protocol which allows the separation between the network control plane and the forwarding plane.
 It must be implemented both by a network device, like a switch, and by the controller. In this way it 
@@ -25,6 +30,13 @@ can communicate with any type of switch, whether it is a software or a hardware 
 the central point for configuration and management of the forwarding plane. This separation also, ideally, makes the
 switch simpler. The reality can be a little different, because part of the functionality that is moved away from
 the device is replaced by the OpenFlow implementation.
+
+OpenFlow can be considered a model\cite{sdn} having various characteristics:
+\begin{itemize}
+ \item Communication protocols
+ \item APIs for programmatic configuration
+ \item Separation between the control plane and the forwarding plane.
+\end{itemize}
 
 The required switch functions and the OpenFlow protocol are defined in an OpenFlow Specification.
 This is maintained by the Open Networking Foundation\cite{onf}. At the time this project was developed, the specification
@@ -97,7 +109,7 @@ some of the newest features specified in OpenFlow 1.4.
 
 Applying a set of multiple configuration changes regarding switch ports or forwarding rules can become
 challenging when working with multiple switches. As part of this project, we will also design and implement
-a solution that will allow atomic processing of OpenFlow message bundles.
+a solution that will allow atomic processing of OpenFlow messages by encapsulating them in bundles.
 
 As part of testing and development of the new OpenFlow 1.4 bundles feature, we will also implement a proof of concept
 controller that should utilize this functionality. Together with an Intrusion Detection System like Snort\cite{snort}
