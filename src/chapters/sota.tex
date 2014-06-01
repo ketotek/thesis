@@ -3,15 +3,17 @@
 
 The SDN Product Directory\cite{onf:products} page from Open Networking Foundation\cite{onf} lists
 several products for hardware switching and virtual switching. Of all the virtual switching solutions,
-only two of them mention supporting OpenFlow version 1.3. These are proprietary products that
+only two of them mention supporting OpenFlow version 1.3. However, these are proprietary products that
 we can't contribute to.
 
-Another solution for virtual switching that is open source is Open vSwitch. It is able to connect to OpenFlow controllers,
+Another solution for virtual switching that this time is open source is Open vSwitch. It is able to connect to OpenFlow controllers,
 but it does not support the newest additions to the protocol. The documentation mentions that 
 ``support for OpenFlow 1.1 and beyond is a work in progress''\footnote{\url{https://github.com/openvswitch/ovs/blob/master/OPENFLOW-1.1\%2B}}.
+We can use Open vSwitch as a base of development for implementing our project.
  
 In order to work on new features for Open vSwitch, we must also analyze existing solutions for implementing controllers
-that use OpenFlow 1.4.
+that use OpenFlow 1.4. We want to focus on the switch implementation so we don't want to write a controller from
+scratch. We present in the next section the options that we have.
  
 \section{Related Work}
 
@@ -20,11 +22,12 @@ that use OpenFlow 1.4.
 On the controller side, there are also several implementations of frameworks used for developing
 various network management and control applications. POX\cite{pox} can be used to write various networking software,
 including OpenFlow switches and controllers. However, it can only communicate with OpenFlow 1.0 switches.
+Adding support for newer versions is out of the scope of this project.
 
 One of the relatively new SDN projects is OpenDaylight\footnote{\url{http://www.opendaylight.org/}}. It is lead by
 the Linux Foundation and aims to improve the development and adoption of SDN. Currently, they offer a modular controller,
 written in Java. Modules are provided both for northbound and southbound APIs. Northbound APIs are used by high level
-network application to implement bussiness logic. The southbound APIs allow the controller to act on the physical or
+network application to implement business logic. The southbound APIs allow the controller to act on the physical or
 virtual network devices, like switches. The support for OpenFlow is, however, limited to versions 1.0 and 1.3, so
 we had to find other options.
 
@@ -34,9 +37,15 @@ controller that can also send OpenFlow 1.4 bundle messages.
 
 \section{Project Motivation}
 
-\section{Use cases}
+Keeping a consistent state between multiple switches and controllers is challenging. Configuration
+changes can happen at either of them and the separation paradigm introduced by SDN makes it even
+more difficult. For example, we might need to propagate changes to several devices. These changes form
+a logical group and are not useful if not applied together. So one failure at this stage is already too
+late. That is why we need to keep the controller informed of the status of the switch (by notifying it of
+permissions, available resources, various changes) and allow it to form logical groups of messages that
+must be executed together.
 
-Batching OpenFlow messages using bundles for having synchronized changes across multiple switches,
+One use case of batching OpenFlow messages using bundles is to have synchronized changes across multiple switches,
 for example, during an initialization phase. The pre-validation of messages and atomic commit ensure
 that the state remains consistent between the controller and several switches.
 
@@ -47,3 +56,4 @@ by inspecting the traffic patterns to determine the application types and permis
 These types of security solutions can be built on top of OpenFlow controllers. By batching OpenFlow
 messages we can ensure that security rules are enforced correctly and completely. In addition, we can
 deploy a set of rules to multiple devices at the same time.
+
