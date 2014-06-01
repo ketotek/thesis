@@ -17,7 +17,7 @@ The Linux kernel has an implementation of a software switch. Using the \texttt{8
 be faster than hardware switches. However, it brings a lot of flexibility. Virtualization products
 use the Linux software bridge to connect multiple virtual machines together or to an external physical network.
 
-The switch can also be configured manually. Forwarding rules are stored in the kernel using a Forwarding DataBase (FDB).
+The switch can also be configured manually. Forwarding rules are stored in the kernel using a Forwarding Database (FDB).
 This can work in practice, but with a large number of ports and rules, it becomes difficult. Keeping the rules updated
 and migrating them as the virtual machines require is also a problem. Here is where SDN can help, as we will discuss
 in the following sections.
@@ -40,7 +40,7 @@ OpenFlow can be considered a model\cite{sdn} having various characteristics:
 
 The required switch functions and the OpenFlow protocol are defined in an OpenFlow Specification.
 This is maintained by the Open Networking Foundation\cite{onf}. At the time this project was developed, the specification
-had reached version 1.4. The document defines the on-the-wire protocol format and various features that could
+had reached version 1.4\cite{of14}. The document defines the on-the-wire protocol format and various features that could
 be implemented by switches.
 
 Communication between OpenFlow controllers and switches is done using OpenFlow messages sent over the network.
@@ -98,14 +98,16 @@ of them is related to the separation of the control plane from the data plane. A
 need to have up to date information about the state of each of the switches that it controls in order to
 make correct decisions.
 
+We want to focus on implementing parts of the OpenFlow communication protocol that would improve
+the consistency of state of network devices and application controllers. In order to keep the solution
+as simple as possible and make it standard across any OpenFlow device, we will implement it using
+some of the newest features specified in OpenFlow 1.4\cite{of14}: Role status notifications and Bundles.
+
 One synchronization issue that can arise between switches and controllers is related to the permissions
 that a controller has over the configuration of a switch. Because multiple controllers can connect to a
-switch, the notion of \texttt{roles} has been introduced in OpenFlow.
-
-We want to focus on implementing parts of the OpenFlow communication protocol that would improve
-the synchronization between network devices and application controllers. In order to keep the solution
-as simple as possible and make it standard across any OpenFlow device, we will implement it using
-some of the newest features specified in OpenFlow 1.4.
+switch, the notion of \texttt{roles} has been introduced in OpenFlow. Keeping the controllers up to date
+with the changes happening on the switch is done by allowing the controllers to subscribe and to receive
+notifications of these changes.
 
 Applying a set of multiple configuration changes regarding switch ports or forwarding rules can become
 challenging when working with multiple switches. As part of this project, we will also design and implement
@@ -115,20 +117,30 @@ As part of testing and development of the new OpenFlow 1.4 bundles feature, we w
 controller that should utilize this functionality. Together with an Intrusion Detection System like Snort\cite{snort}
 we can create a flexible Intrusion Prevention System for virtualized hosts.
 
-% \subsection{Project Scope}
-% \label{sub-sec:proj-scope}
-
-\subsection{Project Objectives}
+\section{Project Objectives}
 \label{sub-sec:proj-objectives}
 
 Firstly, it is necessary to develop an understanding of the inner workings of the virtual switch and the interactions
 it has with a controller. Then, we'll design and implement several features from the specification that will
-allow a better synchronization between the state of the switch with that of the controller. The final objective
-is to integrate the changes of this project into the upstream Open vSwitch project. This also means to interact
+allow a better synchronization between the state of the switch with that of the controller. The main feature that
+we want to have is batch processing of OpenFlow messages in bundles. The final objective is to integrate the changes of
+this project into the upstream Open vSwitch project. This also means to interact
 with the Open vSwitch community for presenting the work, asking and doing patch reviews and getting the code in
 the right shape for being accepted.
 
+\section{Summary}
+\labelindexref{Chapter}{chapter:sota} will introduce existing solutions that use OpenFlow, both switches and controllers, and our
+motivation to add new features to Open vSwitch.
 
-% \subsection{Related Work}
-% \label{sub-sec:related-work}
+\labelindexref{Chapter}{chapter:architecture} presents two approaches for doing transactions of OpenFlow messages.
+
+\labelindexref{Chapter}{chapter:impl} will describe how was one of the solutions implemented in Open vSwitch.
+
+\labelindexref{Chapter}{chapter:test-eval} presents our testing environment and the results of implementing the new
+OpenFlow features in Open vSwitch.
+
+\labelindexref{Chapter}{chapter:app} shows an application that can make use of the OpenFlow bundles.
+
+\labelindexref{Chapter}{chapter:conclusion} states the conclusions after doing this project and presents
+directions for continuing the work.
 
