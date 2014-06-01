@@ -3,11 +3,12 @@
 In large server virtualization deployments the management of the network infrastructure
 becomes harder to implement. The nodes and the entire network are getting very dynamic
 so maintaining the entire network state and device configurations is difficult. One
-solution to these problems is Open vSwitch, a virtual software switch. This paper
-presents some contributions done for this open source project related to OpenFlow
-support.
+solution to these problems is Software Defined Networking(SDN). SDN uses the OpenFlow
+protocol to separate the data plane from the control plane. This approach allows the creation
+of centralized controller applications, but it also introduces several issues.
+One of them is the possibility to have inconsistencies between controllers and switches,
+because of this new separation. Our project brings some OpenFlow features to the
+Open vSwitch virtual software switch to mitigate these problems.
 
-
-
-Keywords: virtualization, Software Defined Networking, OpenFlow, Open vSwitch
+Keywords: Network virtualization, OpenFlow, Open vSwitch, Software Defined Networking
 

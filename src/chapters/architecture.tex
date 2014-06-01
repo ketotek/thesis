@@ -16,21 +16,37 @@ it is delegated to an actual database server, part of Open vSwitch.
 
 Because of the high variety of OpenFlow messages that could be bundled together, we focus our design
 and implementation only on some types of messages. These are messages that modify the state of the switch.
-The Port modification messages are used to change various flags on the ports of a switch: link state,
-dropping of incoming packets, link speed, auto-negotiation and many others. Flow entry modification messages
+The Port modification messages(port-mod) are used to change various flags on the ports of a switch: link state,
+dropping of incoming packets, link speed, auto-negotiation and many others. Flow entry modification messages(flow-mod)
 apply changes to the rules that a switch uses to make forwarding decisions. Other messages will have to
 trigger an error if they are added to a bundle.
 
+\section{Multi-version Concurrency Control}
+
+The first solution that we investigated was to use a Multi-version Concurrency Control(MVCC) protocol\cite{weikum.1}.
+In MVCC, each object that can be changed by a transaction can exist as multiple versions at the same time. Changes to
+objects create new versions of them. Each reader will be presented with the version of the object prior to starting
+the transaction.
+
+In our case, using this solution would have meant changing the existing implementation to work with version information
+for each modifiable data structure. We would have to handle each OpenFlow message that makes changes to ports or flows
+so that a copy is made with the new modifications. Then, statistics, for example, would need to take into account the
+version information and active transactions to process only the required objects at the time of invocation. All of this
+represents quite a lot of overhead for the design and implementation. On top of that we had to do the actual OpenFlow
+bundles to also use this version information. We considered this option to be very complex and intrusive so we settled
+for a simpler solution, presented next.
+
+\section{Final solution}
+
 The high level algorithm that will govern the way bundles operate is shown in Listing~\ref{code:alg}. The top
 level actions of opening a bundle, adding messages and committing will correspond to OpenFlow 1.4 bundle messages.
-These will be sent by a controller application as part of the bundle workflow.
+These will be sent by a controller application as part of the bundle work flow.
 
 To ensure that at the time of the commit, the chances of failing are as small as possible, each message
 is validated before being added to a bundle. These validity checks are specific to each message type and refer
 both to the message format and content and to the switch state. The actual verification is done according to
 the OpenFlow specification as if each message was received separately and not in a bundle.
 
-\pagebreak
 \begin{lstlisting}[caption={Basic Commit Algorithm}, label=code:alg]
 Open a new bundle
 Add a message
