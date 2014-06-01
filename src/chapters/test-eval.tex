@@ -68,9 +68,14 @@ in Chapter~\ref{chapter:app}.
 
 \subsection{Open vSwitch Hackathon}
 
-TODO: talk about the hackathon
+An Open vSwitch hackathon\footnote{\url{http://openvswitch.org/pipermail/announce/2013-August/000053.html}}
+was the first opportunity we had to gain more experience about the project
+and to start contributing fixes and features. It was held on 6 - 7 September, 2013 and the main
+purpose was to improve the support for OpenFlow in Open vSwitch. By the end of the hackathon we managed
+to add a missing OpenFlow 1.3 functionality, processing \texttt{GET_ASYNC_CONFIG} messages.
 
-The handling of the \texttt{ROLE_STATUS} OpenFlow messages was successfully integrated into Open vSwitch.
+The handling of the \texttt{ROLE_STATUS} OpenFlow messages was successfully integrated\footnote{\url{http://openvswitch.org/pipermail/git/2013-October/004800.html}}
+into Open vSwitch, one month after the hackathon.
 In order to test the functionality and prevent future regressions, some unit tests
 where also implemented. The Open vSwitch project already has a set of tests for probably
 any functionality. These are written using GNU Autotest from the Autoconf\cite{autoconf}
@@ -79,9 +84,12 @@ package by sending custom messages to the switch, simulating a controller.
 \subsection{OpenFlow Bundles}
 
 The implemented interface for bundles from the specification works as expected. The corner cases also
-have unit tests. This forms a base for implementing batching messages of any types.
+have unit tests, like the one in Appending~\ref{lst:test-bundles}. This forms a base for implementing batching messages of any types. This part
+of the project is already included in the upstream Open vSwitch. The main series of patches was
+accepted after 6 iterations and reviews.
 
-We have complete support for batching together multiple port-mod messages in bundles.
+We have complete support for batching together multiple port-mod messages in bundles. Currently,
+we are getting feedback on how to properly integrate the feature in Open vSwitch.
 
 OpenFlow flow-mod messages are also permitted in bundles, but the implementation is not complete.
 We only support adding and removing flow messages.
@@ -93,12 +101,12 @@ In order to determine the performance of the OpenFlow bundles implementation, a 
 was created. The learning switch controller was modified to create bundles, add messages to them
 and then commit the bundle. We recorded the running time of these operations on the controller side.
 The results were then compared with the running time for the same messages sent to the controller,
-but without using bundles. All tests were run 10 times and the results were averaged.
+but without using bundles. All tests were run $5$ times and the results were averaged.
 
-The tests were run with 100 port-mod messages, using an increasing number of ports connected to a single
+The tests were run with $100000$ port-mod messages, using an increasing number of ports connected to a single
 switch. The results in Table~\ref{tbl:bundleperf} show that the duration of the commit operation is constant,
 regardless of the number of ports. The total duration for processing bundled messages is, on average,
-$35\%$ slower than sending each message individually. This also includes the duration for allocating
+$36\%$ slower than sending each message individually. This also includes the duration for allocating
 a bundle and closing it.
 
 It can also be observed that the total number of ports in the switch does not influence the performance.
@@ -111,22 +119,22 @@ list of modified ports has only one element which is accessed in constant time.
     \toprule
       Port Count & Individual Message Time(ms) & Bundled Message Time(ms) & Commit time(ms) \\
     \midrule
-        2 & 7.30 & 9.16 & 0.026 \\
-       10 & 5.93 & 8.32 & 0.024 \\
-       100 & 6.36 & 8.93 & 0.027 \\
+        2 & 3624 & 5091 & 0.016 \\
+       10 & 3573 & 4814 & 0.016 \\
+       100 & 3697 & 4961 & 0.016 \\
     \bottomrule
   \end{tabular}
-  \caption{Bundled Messages Performance for 100 Messages}
+  \caption{Bundled Messages Performance for 100000 Messages}
     \label{tbl:bundleperf}
 \end{table}
 
-We also ran the same tests by equally distributing the ports to the 100 port-mod messages. The results
-are shown in Table~\ref{tbl:bundleperf2}. In this case, the relative performance drop is, on average, of only $33\%$.
+We also ran the same tests by equally distributing the ports to the $100000$ port-mod messages. The results
+are shown in Table~\ref{tbl:bundleperf2}. In this case, the relative performance drop is, on average, of only $32\%$.
 The two sets of results are almost identical. One explanation is that the number of messages and the number of
 ports is relatively small. We believe that even with larger number of ports the performance doesn't degrade
 to the point of becoming a problem. Moreover, these results were obtained by having the switch and the controller
-on the same physical machine. If the controller was to run in another network, or even in the local network,
-the difference in processing time would be on the same level as the network latency.
+on the same physical machine. If the controller was to run in another network, or even in the local network
+and with a smaller number of messages, the difference in processing time would be on the same level as the network latency.
 
 \begin{table}[h]
   \centering
@@ -134,14 +142,21 @@ the difference in processing time would be on the same level as the network late
     \toprule
       Port Count & Individual Message Time(ms) & Bundled Message Time(ms) & Commit time(ms) \\
     \midrule
-        2 & 6.28 & 8.35 & 0.028 \\
-       10 & 5.69 & 7.81 & 0.023 \\
-       100 & 5.97 & 7.71 & 0.024 \\
+        2 & 3584 & 4752 & 0.015 \\
+       10 & 3589 & 4778 & 0.015 \\
+       100 & 3651 & 4888 & 0.015 \\
     \bottomrule
   \end{tabular}
-  \caption{Bundled Messages Performance for 100 Messages and Different Ports}
+  \caption{Bundled Messages Performance for 100000 Messages and Different Ports}
     \label{tbl:bundleperf2}
 \end{table}
+
+We can better observe the performance implications of using OpenFlow bundles in Figure~\ref{fig:bundleperf}.
+A similar test was run with bundles of flow-mod messages and the same performance penalty of $31\%$ was observed.
+This is also an indication that the controller itself has an overhead included in these results. Knowing that
+our implementation for flow-mod messages in bundles has a slow path in the commit phase, and the commit duration
+is the same like it is for port-mod messages, we can conclude that the actual decapsulation and pre-processing
+of the packets is the most time consuming task.
 
 \begin{figure}[h]
   \begin{center}
@@ -153,19 +168,19 @@ the difference in processing time would be on the same level as the network late
 		    width=300
 		    ]
 	    \addplot[sharp plot,color=red,mark=x] coordinates {
-		    (2,7.3)
-		    (10,5.93)
-		    (100,6.36)
+		    (2,3584)
+		    (10,3589)
+		    (100,3651)
 	    };
 	    \addplot[sharp plot,color=blue,mark=*] coordinates {
-		    (2,9.16)
-		    (10,8.32)
-		    (100,8.93)
+		    (2,4752)
+		    (10,4778)
+		    (100,4888)
 	    };
 	    \legend{Individually Sent Messages, Bundled Messages}
 	    \end{axis}
     \end{tikzpicture}
-    \caption{Bundled Messages Performance for 100 Messages}
+    \caption{Bundled Messages Performance for 100000 Messages}
     \label{fig:bundleperf}
   \end{center}
 \end{figure}
