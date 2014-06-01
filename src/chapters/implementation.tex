@@ -23,8 +23,7 @@ includes encoding and decoding the following message types:
  \item OFPT_BUNDLE_CONTROL
  \item OFPT_BUNDLE_ADD_MESSAGE
 \end{itemize}
-The first message type is used to open a new bundle, close it, respectively to commit or discard it. The
-actual on-the-wire contents of the packet has the structure presented in Figure~\ref{fig:bundle-open-bytes}.
+
 
 \begin{figure}[h]
 \begin{center}
@@ -34,8 +33,16 @@ actual on-the-wire contents of the packet has the structure presented in Figure~
 \label{fig:bundle-open-bytes}
 \end{figure}
 
+The first message type is used to open a new bundle, close it, respectively to commit or discard it. The
+actual on-the-wire contents of the packet has the structure presented in Figure~\ref{fig:bundle-open-bytes}.
+The first $8$ octets of the message form the OpenFlow header. This is where the first level of multiplexing
+happens, using the ``Message'' field. The ``Message ID'' is used for identifying message replies. Following the header,
+we have the body of the message, in this case, a \texttt{BUNDLE_CONTROL} message of type \texttt{OPEN_REQUEST}. The newly
+created bundle will have the identifier and flags specified in the message.
+
+
 The second message is used after opening a bundle to add messages to it. The same structure applies as for control
-messages, but the encpasulated message is added after the main message.
+messages, but the encapsulated message is added after the main message.
 
 \begin{figure}[h]
 \begin{center}
@@ -85,12 +92,14 @@ Handling flow-mod messages in a bundle is more difficult because the changes are
 We cannot create the same type of staging area that we used for port-mod messages. Moreover, flow-mod messages can have
 different actions, like adding, modifying or removing flows and so they have to be treated differently.
 
-Adding flows is done by using higher priorities instead of the original priority found in the flow-mod message. This
-will force the switch to hide the newly added rule from controllers and will also avoid sending notifications about it.
+Adding flows is done by using higher priorities instead of the original priority found in the flow-mod message. All flows
+have a numeric priority used in matching traffic. If the priority is over a certain threshold, the flows will essentially
+be ``hidden'' from the controller. We can use this already existing feature to hide the newly added rule from controllers
+and to prevent the switch from sending notifications about it.
 When we are ready to commit, the rules can be made visible again. In the same way, modifying can be done in 2 steps:
 adding new hidden flows and removing the old ones. The actual removing is done only at the time of the commit.
 
 To make sure that the data structures that are to be modified by the messages in a bundle won't change or even disappear,
-we had to take care of concurrent accesses. For each OpenFlow connection, while there are bundles active, we enqueue the
+we had to take care of concurrent accesses. For each OpenFlow connection, while there are bundles active, we en-queue the
 received OpenFlow messages. Bundle control messages are still allowed to pass through. When no more bundles are associated
 with a connection, the processing loop will start to extract messages from the queue, if it's not empty.
