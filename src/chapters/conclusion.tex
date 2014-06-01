@@ -21,5 +21,15 @@ There is now basic handling of OpenFlow 1.4 bundles messages in Open vSwitch. Ou
 to batch together port and flow modification messages and send them to execution to Open vSwitch. Port modifications
 are merged together and applied as a single operation. Flow modification messages are only partially implemented
 because of the complexity of the changes that they required. We only support adding and removing flows, and not
-modifying existing flows.
+modifying existing flows. As far as contributing our work to the Open vSwitch project, the basic handling of bundle
+messages has already been accepted. We are working on getting the actual commit for port-mod and flow-mod messages
+in the right shape for upstream inclusion.
 
+As the performance tests showed, our implementation of the bundles feature is, on average, $31\%$ slower than using
+individual OpenFlow messages. This can be attributed to multiple factors, including the encapsulation of messages
+and the need for multiple bundle control messages (for creating, closing and committing). Our solution does scale
+well, in constant time to the number of ports and linearly to the number of messages.
+
+Further work is still needed for our \texttt{ovs-pktgen} tool for better handling of various OpenFlow messages. At the
+moment it is a side-project that resulted while developing OpenFlow bundles. Since many OpenFlow features are
+not implemented in Open vSwitch, it may become a useful tool for others, so an upstream integration would be ideal.
