@@ -1,12 +1,11 @@
 AT_SETUP([ofproto - bundles, double open (OpenFlow 1.4)])
-AT_KEYWORDS([monitor])
 OVS_VSWITCHD_START
 
 # Start a monitor, use the required protocol version
 ovs-ofctl -O OpenFlow14 monitor br0 --detach --no-chdir --pidfile >monitor.log 2>&1
 AT_CAPTURE_FILE([monitor.log])
 
-# Send twice an OpenFlow14 message (05), OFPT_BUNDLE_CONTROL (21), length (10), xid (0a)
+# Send twice an OpenFlow14 message (05)
 ovs-appctl -t ovs-ofctl ofctl/send "05 21 00 10 00 00 00 0a 00 00 00 01 00 00 00 01"
 ovs-appctl -t ovs-ofctl ofctl/barrier
 ovs-appctl -t ovs-ofctl ofctl/send "05 21 00 10 00 00 00 0a 00 00 00 01 00 00 00 01"
@@ -29,4 +28,3 @@ OFPT_BARRIER_REPLY (OF1.4):
 
 OVS_VSWITCHD_STOP
 AT_CLEANUP
-
